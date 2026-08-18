@@ -1,0 +1,22 @@
+{
+  "skill_id": "ovos-skill-intercom.andlo",
+  "source": "https://github.com/andlo/ovos-skill-intercom",
+  "package_name": "ovos-skill-intercom",
+  "pip_spec": "ovos-skill-intercom",
+  "license": "GPL-3.0-or-later",
+  "author": "andlo",
+  "name": "Intercom",
+  "description": "LAN-intercom - send en talt besked til en navngiven OVOS-enhed på samme netværk. Kun tale, udfører aldrig kommandoer på modtager-enheden.",
+  "examples": [
+    "sæt intercom-navn til stuen",
+    "sæt intercom-kode til fire syv to ni",
+    "send en besked til soveværelset"
+  ],
+  "tags": [
+    "intercom",
+    "multi-device",
+    "besked",
+    "lan"
+  ],
+  "icon": "https://raw.githubusercontent.com/andlo/ovos-skill-intercom/main/icon.png"
+}

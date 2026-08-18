@@ -1,0 +1,22 @@
+{
+  "skill_id": "ovos-skill-intercom.andlo",
+  "source": "https://github.com/andlo/ovos-skill-intercom",
+  "package_name": "ovos-skill-intercom",
+  "pip_spec": "ovos-skill-intercom",
+  "license": "GPL-3.0-or-later",
+  "author": "andlo",
+  "name": "Intercomunicador",
+  "description": "Intercomunicador LAN - envía un mensaje hablado a un dispositivo OVOS nombrado en la misma red. Solo habla, nunca ejecuta comandos en el dispositivo receptor.",
+  "examples": [
+    "establece el nombre de intercomunicador en salón",
+    "establece el código de intercomunicador en cuatro siete dos nueve",
+    "envía un mensaje a dormitorio"
+  ],
+  "tags": [
+    "intercomunicador",
+    "multi-dispositivo",
+    "mensaje",
+    "lan"
+  ],
+  "icon": "https://raw.githubusercontent.com/andlo/ovos-skill-intercom/main/icon.png"
+}
