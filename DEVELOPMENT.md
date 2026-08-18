@@ -187,24 +187,38 @@ competing mDNS advertisements for the same device name, with no
 guarantee which one a peer's `discover_peer()` ends up talking to on
 any given send.
 
-Rather than wait on an upstream fix, `Intercom` self-heals via a
-module-level (not per-instance) singleton guard: `_active_server` and
-`_active_server_lock` track whichever `IntercomServer` is currently
-running *across* however many `Intercom` instances the platform bug
-produces. Each `initialize()` call stops any previously-active
-server before starting its own and claiming the singleton slot - so
-regardless of how many duplicate instances get created, only the
-most-recently-initialized one's HTTP listener and mDNS advertisement
-stay live. `shutdown()` is defensive both ways: safe to call on an
-already-stopped server (the stale instance being torn down later),
-and only clears `_active_server` if it's still pointing at that
-specific instance's server (so a stale instance's shutdown can't
+Rather than wait on an upstream fix, `Intercom` self-heals via
+module-level (not per-instance) singleton guards. **Two separate
+resources need this, not one** - found out the hard way in v0.0.3,
+which only guarded the HTTP server: `_active_server` tracks whichever
+`IntercomServer` is currently running, and each `initialize()` call
+stops any previously-active server before starting its own. That
+alone turned out insufficient - live-tested against v0.0.3, the
+SECOND instance's own mDNS registration attempt then **failed
+outright** (`"Failed to register intercom mDNS service"`), because
+the FIRST instance's advertisement (same device name) was still live
+under zeroconf's own duplicate-name protection, even though that
+first instance's HTTP server had already been stopped. Net effect:
+peers would have discovered the stale, dead port, not the live one.
+Fixed in v0.0.4 by adding a second, identically-patterned guard,
+`_active_advertisement`, covering the mDNS registration the same way
+`_active_server` covers the HTTP listener - whichever instance's
+`_update_advertisement()` runs last unregisters and closes any
+previous advertisement before registering its own.
+
+`shutdown()` is defensive both ways for both resources: safe to call
+on an already-stopped server or already-unregistered advertisement
+(the stale instance being torn down later), and only clears the
+module-level pointer if it's still pointing at that specific
+instance's own resource (so a stale instance's shutdown can't
 accidentally clear the CURRENT active instance's state).
 
-Verified with real `HTTPServer` instances in
-`tests/test_duplicate_instantiation_guard.py`, not mocked stand-ins -
-including confirming the stopped instance's port genuinely stops
-accepting connections, not just that a mock's `.stop()` was called.
+Verified with real `HTTPServer` instances (not mocked) for the server
+guard, and a fake (not real-network) `Zeroconf` stand-in for the
+advertisement guard - real enough to exercise the actual
+register/unregister/close call sequence without needing real
+multicast traffic in CI, see
+`tests/test_duplicate_instantiation_guard.py`.
 
 ## Known limitations
 

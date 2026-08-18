@@ -292,13 +292,25 @@ def _make_handler(skill):
     return IntercomRequestHandler
 
 
-# Module-level (not per-instance) singleton guard against a confirmed
-# platform bug (OpenVoiceOS/ovos-core#887) that can instantiate every
-# plugin skill on a device TWICE at startup - see the Intercom class
-# docstring below for the full reasoning. Deliberately module-level,
-# not a class attribute, since the whole point is tracking state
-# ACROSS multiple Intercom instances that shouldn't coexist.
+# Module-level (not per-instance) singleton guards against a
+# confirmed platform bug (OpenVoiceOS/ovos-core#887) that can
+# instantiate every plugin skill on a device TWICE at startup - see
+# the Intercom class docstring below for the full reasoning.
+# Deliberately module-level, not class attributes, since the whole
+# point is tracking state ACROSS multiple Intercom instances that
+# shouldn't coexist. Two separate resources need this, not one:
+# _active_server (the HTTP listener) and _active_advertisement (the
+# mDNS registration) - guarding only the server was tried first and
+# found insufficient by live testing: the second instance's own
+# mDNS registration attempt FAILED outright ("Failed to register
+# intercom mDNS service") because the first instance's advertisement
+# was still live under zeroconf's own duplicate-name protection,
+# even though that first instance's HTTP server had already been
+# stopped - leaving peers pointed at a dead port. Both resources
+# need the same singleton treatment, not just the more obviously
+# stateful one.
 _active_server = None
+_active_advertisement = None  # (Zeroconf, ServiceInfo) tuple, or None
 _active_server_lock = threading.Lock()
 
 
@@ -389,6 +401,7 @@ class Intercom(OVOSSkill):
     # setting changes, so renaming takes effect without a restart.
     # -----------------------------------------------------------
     def _update_advertisement(self):
+        global _active_advertisement
         self._unadvertise()
         name = normalize_name(self.settings.get("intercom_name"))
         if name is None:
@@ -396,14 +409,37 @@ class Intercom(OVOSSkill):
         ip = get_local_ip()
         if ip is None:
             return
-        self._zc = Zeroconf()
-        self._service_info = build_service_info(name, ip, self._server.port)
-        try:
-            self._zc.register_service(self._service_info)
-        except Exception:
-            self.log.exception("Failed to register intercom mDNS service")
+        with _active_server_lock:
+            if _active_advertisement is not None:
+                # Same singleton reasoning as _active_server above -
+                # a stale duplicate instance's advertisement, still
+                # live, would otherwise make THIS registration fail
+                # outright (zeroconf refuses a duplicate service
+                # name), not just leave two advertisements racing.
+                old_zc, old_info = _active_advertisement
+                try:
+                    old_zc.unregister_service(old_info)
+                except Exception:
+                    pass
+                try:
+                    old_zc.close()
+                except Exception:
+                    pass
+                _active_advertisement = None
+            zc = Zeroconf()
+            info = build_service_info(name, ip, self._server.port)
+            try:
+                zc.register_service(info)
+                self._zc = zc
+                self._service_info = info
+                _active_advertisement = (zc, info)
+            except Exception:
+                self.log.exception("Failed to register intercom mDNS service")
+                self._zc = None
+                self._service_info = None
 
     def _unadvertise(self):
+        global _active_advertisement
         zc = getattr(self, "_zc", None)
         info = getattr(self, "_service_info", None)
         if zc is not None and info is not None:
@@ -411,7 +447,13 @@ class Intercom(OVOSSkill):
                 zc.unregister_service(info)
             except Exception:
                 pass
-            zc.close()
+            try:
+                zc.close()
+            except Exception:
+                pass
+            with _active_server_lock:
+                if _active_advertisement is not None and _active_advertisement[0] is zc:
+                    _active_advertisement = None
         self._zc = None
         self._service_info = None
 
