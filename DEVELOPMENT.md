@@ -11,6 +11,32 @@ skill instead of a much bigger, much more dangerous piece of
 infrastructure - see "Why not just relay to the target's messagebus"
 and "Why this isn't a smaller HiveMind" in the README.
 
+## Article-stripping via substring match, not per-locale article lists
+
+Caught via live testing on real hardware (two devices on the actual
+LAN), not a unit test guess: `"send a message to the bedroom"`
+resolves to `send_message.intent`'s `{target}` slot as `"the
+bedroom"` - Padatious captures whatever follows "to " literally, it
+doesn't know "the" is a droppable article. Meanwhile a device only
+ever advertises its bare configured name (`"bedroom"`) via mDNS.
+`normalize_name()` lowercases and collapses whitespace but never
+stripped articles, so an exact-match lookup failed on completely
+ordinary phrasing - `discover_peer("the bedroom")` couldn't find a
+device advertised as `"bedroom"`, and the user was correctly, if
+misleadingly, told "I can't find a device called the bedroom".
+
+Fixed by checking substring containment as a fallback after an exact
+match fails: if a known device's normalized name is CONTAINED in the
+normalized spoken target, treat it as a match. This generalizes
+across "the"/"a"/"an" and equivalent leading articles in other
+languages without needing a maintained per-locale article list -
+`"the bedroom"` contains `"bedroom"`; `"det soveværelse"` would
+contain `"soveværelse"` the same way, no da-dk-specific code needed.
+The check is deliberately one-directional (device name found IN the
+spoken target, not the reverse) - a device named just `"a"` matching
+every utterance containing the letter "a" would be a much worse
+failure mode than the one this fixes.
+
 ## Threat model: a WiFi-password-equivalent, not HiveMind-grade
 
 The shared household code is proportionate to "keep casual LAN

@@ -155,12 +155,26 @@ class _PeerCollectingListener(ServiceListener):
 
 def discover_peer(target_name, timeout=3):
     """Browses for SERVICE_TYPE for `timeout` seconds and returns
-    {"ip": ..., "port": ...} for the peer matching target_name
-    (normalized comparison), or None if no match was found in time.
-    A fresh, short scan per call rather than a long-running cached
-    browser - intercom messages are infrequent enough that a few
-    seconds' discovery latency per send is an acceptable trade for
-    not keeping a background zeroconf browser running indefinitely."""
+    {"ip": ..., "port": ...} for the peer matching target_name, or
+    None if no match was found in time. A fresh, short scan per call
+    rather than a long-running cached browser - intercom messages are
+    infrequent enough that a few seconds' discovery latency per send
+    is an acceptable trade for not keeping a background zeroconf
+    browser running indefinitely.
+
+    Exact normalized match first, then substring containment as a
+    fallback - found the hard way via live testing, not designed in
+    upfront: Padatious's {target} slot captures whatever follows
+    "to " literally, so "send a message to THE bedroom" produces
+    target_name="the bedroom", while a device only ever advertises
+    its bare configured name ("bedroom") - normalize_name() lowercases
+    and collapses whitespace but doesn't strip articles, so an exact
+    match alone fails on completely ordinary phrasing. Checking
+    whether a known device's name is CONTAINED in the spoken target
+    (not the reverse) handles "the"/"a"/"an" and equivalent articles
+    in other languages generically, without a per-locale article
+    list - see DEVELOPMENT.md "Article-stripping via substring
+    match, not per-locale article lists"."""
     target = normalize_name(target_name)
     if target is None:
         return None
@@ -170,7 +184,12 @@ def discover_peer(target_name, timeout=3):
         ServiceBrowser(zc, SERVICE_TYPE, listener)
         import time
         time.sleep(timeout)
-        return listener.found.get(target)
+        if target in listener.found:
+            return listener.found[target]
+        for name, info in listener.found.items():
+            if name in target:
+                return info
+        return None
     except Exception:
         return None
     finally:
