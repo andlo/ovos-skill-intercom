@@ -6,7 +6,7 @@
   "license": "GPL-3.0-or-later",
   "author": "andlo",
   "name": "Intercom",
-  "description": "Intercom LAN - envoie un message parlé à un appareil OVOS nommé sur le même réseau. Parle uniquement, n'exécute jamais de commandes sur l'appareil récepteur.",
+  "description": "Intercom LAN - envoie un message parlé à un appareil OVOS nommé sur le même réseau local. Entièrement hors ligne, aucune connexion internet requise. Parle uniquement, n'exécute jamais de commandes sur l'appareil récepteur.",
   "examples": [
     "définis le nom intercom à salon",
     "définis le code intercom à quatre sept deux neuf",

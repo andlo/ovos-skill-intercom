@@ -6,7 +6,7 @@
   "license": "GPL-3.0-or-later",
   "author": "andlo",
   "name": "Intercomunicador",
-  "description": "Intercomunicador LAN - envía un mensaje hablado a un dispositivo OVOS nombrado en la misma red. Solo habla, nunca ejecuta comandos en el dispositivo receptor.",
+  "description": "Intercomunicador LAN - envía un mensaje hablado a un dispositivo OVOS nombrado en la misma red local. Totalmente sin conexión, no requiere internet. Solo habla, nunca ejecuta comandos en el dispositivo receptor.",
   "examples": [
     "establece el nombre de intercomunicador en salón",
     "establece el código de intercomunicador en cuatro siete dos nueve",

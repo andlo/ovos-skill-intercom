@@ -6,7 +6,7 @@
   "license": "GPL-3.0-or-later",
   "author": "andlo",
   "name": "Intercom",
-  "description": "LAN-Intercom - sendet eine gesprochene Nachricht an ein benanntes OVOS-Gerät im selben Netzwerk. Nur Sprache, führt niemals Befehle auf dem Empfängergerät aus.",
+  "description": "LAN-Intercom - sendet eine gesprochene Nachricht an ein benanntes OVOS-Gerät im selben lokalen Netzwerk. Vollständig offline, keine Internetverbindung erforderlich. Nur Sprache, führt niemals Befehle auf dem Empfängergerät aus.",
   "examples": [
     "setze intercom-namen auf wohnzimmer",
     "setze intercom-code auf vier sieben zwei neun",
