@@ -66,9 +66,9 @@ devices with matching codes can message each other.
 Peer devices are found by name via mDNS - no IP addresses to type or
 remember. A device advertises itself as soon as it has a **name**
 set, even before a code is configured, so a sender gets a specific,
-useful error (`"soveværelset har ikke en intercom-kode sat"`) rather
-than a bare "device not found" when the target exists but isn't
-fully set up yet.
+useful error (`"the bedroom doesn't have an intercom code set"`)
+rather than a bare "device not found" when the target exists but
+isn't fully set up yet.
 
 Delivery is a single HTTP request over the LAN to the discovered
 peer, carrying the sender's name, the shared code, and the message.
