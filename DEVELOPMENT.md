@@ -159,6 +159,53 @@ whether the recipient actually engages with it, matching how a real
 doorbell/intercom buzzer works: you know it rang, independent of
 whether anyone answers.
 
+## Self-healing against duplicate instantiation
+
+Discovered during live cross-device testing, not anticipated in the
+original design: **every plugin skill on an OVOS device can be
+instantiated TWICE at startup** if network/internet are already
+connected when `SkillManager` starts (the common case) - a genuine
+platform-level race condition, filed as
+[OpenVoiceOS/ovos-core#887](https://github.com/OpenVoiceOS/ovos-core/issues/887)
+after confirming it affects official skills (e.g.
+`ovos-skill-ddg.openvoiceos`) equally, not something specific to this
+project's skills or their entry-point declarations. Root cause, as
+far as traced: `SkillManager.run()` calls `_load_on_startup()`
+synchronously on its own thread, while `handle_network_connected`/
+`handle_internet_connected` (bus-message handlers dispatched on a
+*different* thread) can fire almost immediately if the network is
+already up, both ultimately reaching `load_plugin_skills()`'s
+`if skill_id not in self.plugin_skills` check on a plain,
+unsynchronized dict - a classic time-of-check-to-time-of-use race
+that lets both threads pass the check for the same `skill_id` before
+either has finished loading it.
+
+For most skills this "only" means a harmlessly doubled spoken
+response. For this skill it's a real functional problem: two live
+instances means two competing background HTTP listeners and two
+competing mDNS advertisements for the same device name, with no
+guarantee which one a peer's `discover_peer()` ends up talking to on
+any given send.
+
+Rather than wait on an upstream fix, `Intercom` self-heals via a
+module-level (not per-instance) singleton guard: `_active_server` and
+`_active_server_lock` track whichever `IntercomServer` is currently
+running *across* however many `Intercom` instances the platform bug
+produces. Each `initialize()` call stops any previously-active
+server before starting its own and claiming the singleton slot - so
+regardless of how many duplicate instances get created, only the
+most-recently-initialized one's HTTP listener and mDNS advertisement
+stay live. `shutdown()` is defensive both ways: safe to call on an
+already-stopped server (the stale instance being torn down later),
+and only clears `_active_server` if it's still pointing at that
+specific instance's server (so a stale instance's shutdown can't
+accidentally clear the CURRENT active instance's state).
+
+Verified with real `HTTPServer` instances in
+`tests/test_duplicate_instantiation_guard.py`, not mocked stand-ins -
+including confirming the stopped instance's port genuinely stops
+accepting connections, not just that a mock's `.stop()` was called.
+
 ## Known limitations
 
 - **No encryption, no code-guessing rate limiting.** See "Threat

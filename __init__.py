@@ -292,6 +292,16 @@ def _make_handler(skill):
     return IntercomRequestHandler
 
 
+# Module-level (not per-instance) singleton guard against a confirmed
+# platform bug (OpenVoiceOS/ovos-core#887) that can instantiate every
+# plugin skill on a device TWICE at startup - see the Intercom class
+# docstring below for the full reasoning. Deliberately module-level,
+# not a class attribute, since the whole point is tracking state
+# ACROSS multiple Intercom instances that shouldn't coexist.
+_active_server = None
+_active_server_lock = threading.Lock()
+
+
 class IntercomServer:
     """Owns the background HTTPServer thread's lifecycle - started in
     Intercom.initialize(), stopped in Intercom.shutdown(). Binds to
@@ -321,17 +331,58 @@ class Intercom(OVOSSkill):
     """LAN-only speak-only messaging - see the module docstring for
     the non-negotiable "speaks messages, never executes commands"
     boundary, and DEVELOPMENT.md for the fuller architecture
-    reasoning."""
+    reasoning.
+
+    Self-heals against a confirmed platform bug
+    (OpenVoiceOS/ovos-core#887): a race condition in SkillManager's
+    startup sequence can instantiate every plugin skill on a device
+    TWICE if network/internet are already connected when the skill
+    manager starts (the common case). For most skills that just means
+    a doubled spoken response - annoying but harmless. For this skill
+    it's worse: two live instances means two competing background
+    HTTP listeners and two competing mDNS advertisements for the same
+    device name, with no guarantee which one a peer's discover_peer()
+    ends up talking to. `_active_server` is a module-level (not
+    per-instance) singleton guard: whichever Intercom instance's
+    initialize() runs LAST wins, cleanly stopping any earlier
+    instance's server first - see DEVELOPMENT.md "Self-healing
+    against duplicate instantiation" for the full reasoning."""
 
     def initialize(self):
-        self._server = IntercomServer(self)
-        self._server.start()
+        global _active_server
+        with _active_server_lock:
+            if _active_server is not None:
+                self.log.warning(
+                    "Another Intercom instance's server is already running "
+                    "in this process (see OpenVoiceOS/ovos-core#887 - "
+                    "plugin skills can be double-instantiated at startup "
+                    "due to a race condition) - stopping the stale one "
+                    "before starting this one, so only one listener stays "
+                    "active.")
+                try:
+                    _active_server.stop()
+                except Exception:
+                    self.log.exception("Failed to stop stale Intercom server")
+            self._server = IntercomServer(self)
+            self._server.start()
+            _active_server = self._server
         self.add_event(INCOMING_MESSAGE_BUS_EVENT, self._handle_incoming_message)
         self._update_advertisement()
 
     def shutdown(self):
+        global _active_server
         self._unadvertise()
-        self._server.stop()
+        try:
+            self._server.stop()
+        except Exception:
+            # Already stopped - e.g. a later duplicate instance's
+            # initialize() replaced this one via the singleton guard
+            # above, and this is that now-stale instance finally
+            # being torn down. Not an error condition.
+            pass
+        with _active_server_lock:
+            if _active_server is self._server:
+                _active_server = None
 
     # -----------------------------------------------------------
     # Advertising this device - re-registered whenever the name
