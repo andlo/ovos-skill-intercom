@@ -10,7 +10,8 @@
   "examples": [
     "sæt intercom-navn til stuen",
     "sæt intercom-kode til fire syv to ni",
-    "send en besked til soveværelset"
+    "send en besked til soveværelset",
+    "send en besked til soveværelset og sig maden er klar"
   ],
   "tags": [
     "intercom",

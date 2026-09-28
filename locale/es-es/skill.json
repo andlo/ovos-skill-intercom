@@ -10,7 +10,8 @@
   "examples": [
     "establece el nombre de intercomunicador en salón",
     "establece el código de intercomunicador en cuatro siete dos nueve",
-    "envía un mensaje a dormitorio"
+    "envía un mensaje a dormitorio",
+    "envía un mensaje a la habitación diciendo la cena está lista"
   ],
   "tags": [
     "intercomunicador",

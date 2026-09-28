@@ -41,9 +41,11 @@ WiFi password, not "defend against a targeted attacker" - seeDEVELOPMENT.md
 """
 
 import json
+import re
 import socket
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 
 from ovos_workshop.skills import OVOSSkill
 from ovos_workshop.decorators import intent_handler
@@ -379,6 +381,10 @@ class Intercom(OVOSSkill):
             self._server.start()
             _active_server = self._server
         self.add_event(INCOMING_MESSAGE_BUS_EVENT, self._handle_incoming_message)
+        # Re-advertise when the name is changed outside a voice intent
+        # too (settings.json edited by hand, a settings UI, a synced
+        # backend) - ovos-workshop calls this after reloading settings.
+        self.settings_change_callback = self._on_settings_changed
         self._update_advertisement()
 
     def shutdown(self):
@@ -400,6 +406,14 @@ class Intercom(OVOSSkill):
     # Advertising this device - re-registered whenever the name
     # setting changes, so renaming takes effect without a restart.
     # -----------------------------------------------------------
+    def _on_settings_changed(self):
+        name = normalize_name(self.settings.get("intercom_name"))
+        if name == getattr(self, "_advertised_name", None):
+            return  # e.g. only the code changed - nothing to re-announce
+        self.log.info("Intercom name changed in settings to %r - "
+                      "re-advertising", name)
+        self._update_advertisement()
+
     def _update_advertisement(self):
         global _active_advertisement
         self._unadvertise()
@@ -432,6 +446,7 @@ class Intercom(OVOSSkill):
                 zc.register_service(info)
                 self._zc = zc
                 self._service_info = info
+                self._advertised_name = name
                 _active_advertisement = (zc, info)
             except Exception:
                 self.log.exception("Failed to register intercom mDNS service")
@@ -456,6 +471,7 @@ class Intercom(OVOSSkill):
                     _active_advertisement = None
         self._zc = None
         self._service_info = None
+        self._advertised_name = None
 
     # -----------------------------------------------------------
     # Receiving - runs on the skill's normal bus thread, handed off
@@ -516,8 +532,56 @@ class Intercom(OVOSSkill):
         self._update_advertisement()
         self.speak_dialog("name_set", {"name": name})
 
+    def _split_target_and_text(self, target_raw):
+        """"bedroom saying dinner is ready" -> ("bedroom", "dinner is
+        ready"). Padatious can match the one-shot sentence against
+        send_message.intent too, putting the whole rest of the sentence
+        into {target}; this recovers the message from it. The separator
+        words are in message_separator.voc per language."""
+        target_raw = (target_raw or "").strip()
+        lowered = target_raw.lower()
+        best = None
+        for sep in self._message_separators():
+            m = re.search(r"\b" + re.escape(sep) + r"\b", lowered)
+            if m and m.start() > 0 and (best is None or m.start() < best.start()):
+                best = m
+        if best is None:
+            return target_raw, None
+        target = target_raw[:best.start()].strip()
+        text = target_raw[best.end():].strip()
+        return target, (text or None)
+
+    def _message_separators(self):
+        lang = (self.lang or "en-us").lower()
+        path = Path(self.res_dir) / "locale" / lang / "message_separator.voc"
+        if not path.exists():
+            candidates = sorted((Path(self.res_dir) / "locale").glob(
+                lang.split("-")[0] + "-*/message_separator.voc"))
+            if not candidates:
+                return []
+            path = candidates[0]
+        seps = []
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip().lower()
+            if line and not line.startswith("#"):
+                seps.extend(p.strip() for p in line.split("|") if p.strip())
+        # longest first, so "that says" wins over a shorter overlap
+        return sorted(set(seps), key=len, reverse=True)
+
     @intent_handler("send_message.intent")
     def handle_send_message(self, message):
+        target_raw, text = self._split_target_and_text(message.data.get("target"))
+        self._send(target_raw, text)
+
+    @intent_handler("send_message_with_text.intent")
+    def handle_send_message_with_text(self, message):
+        target_raw, text = self._split_target_and_text(message.data.get("target"))
+        text = (message.data.get("message") or "").strip() or text
+        self._send(target_raw, text)
+
+    def _send(self, target_raw, text=None):
+        """Send `text` to the device called `target_raw`, asking for the
+        text first when the sentence didn't include it."""
         own_name = normalize_name(self.settings.get("intercom_name"))
         own_code = normalize_code(self.settings.get("intercom_code"))
         if own_name is None:
@@ -527,7 +591,6 @@ class Intercom(OVOSSkill):
             self.speak_dialog("own_code_not_set")
             return
 
-        target_raw = message.data.get("target")
         target = normalize_name(target_raw)
         if target is None:
             self.speak_dialog("target_not_understood")
@@ -538,10 +601,11 @@ class Intercom(OVOSSkill):
             self.speak_dialog("target_not_found", {"target": target_raw})
             return
 
-        self.speak_dialog("what_to_say")
-        text = self.get_response()
         if not text:
-            return
+            self.speak_dialog("what_to_say")
+            text = self.get_response()
+            if not text:
+                return
 
         status = send_message(peer["ip"], peer["port"], own_name, own_code,
                                text, self._server.port)

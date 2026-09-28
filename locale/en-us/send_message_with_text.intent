@@ -1,0 +1,4 @@
+send a message to {target} saying {message}
+send message to {target} saying {message}
+send an intercom message to {target} saying {message}
+send a message to {target} that says {message}
