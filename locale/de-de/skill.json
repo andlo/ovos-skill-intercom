@@ -10,7 +10,8 @@
   "examples": [
     "setze intercom-namen auf wohnzimmer",
     "setze intercom-code auf vier sieben zwei neun",
-    "sende eine nachricht an schlafzimmer"
+    "sende eine nachricht an schlafzimmer",
+    "sende eine nachricht an das schlafzimmer und sag das essen ist fertig"
   ],
   "tags": [
     "intercom",

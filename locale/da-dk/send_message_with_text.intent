@@ -1,0 +1,5 @@
+send en besked til {target} og sig {message}
+send besked til {target} og sig {message}
+send en besked til {target} om at {message}
+send besked til {target} om at {message}
+send en intercom-besked til {target} og sig {message}

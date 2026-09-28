@@ -10,7 +10,8 @@
   "examples": [
     "définis le nom intercom à salon",
     "définis le code intercom à quatre sept deux neuf",
-    "envoie un message à chambre"
+    "envoie un message à chambre",
+    "envoie un message à la chambre disant le dîner est prêt"
   ],
   "tags": [
     "intercom",

@@ -41,6 +41,11 @@ Every device that should participate says the **same code** - not a
 separate secret per pair of devices. Say it once per device; any two
 devices with matching codes can message each other.
 
+The name and code can also be set in the skill's settings
+(`intercom_name`, `intercom_code` in its `settings.json`, or a
+settings UI). A new name is advertised as soon as the settings are
+saved - no restart needed.
+
 ## Usage
 ```
 "send a message to the bedroom"
@@ -53,6 +58,13 @@ devices with matching codes can message each other.
   [message is spoken]
   "do you want to reply?"
   -> "yes" -> "go ahead, say your reply" -> [you speak it] -> "reply sent"
+```
+
+Or say the message in the same sentence:
+```
+"send a message to the bedroom saying dinner is ready"
+  -> "message sent"
+"send en besked til soveværelset og sig maden er klar"   (Danish)
 ```
 ```
 "send en besked til soveværelset"                  (Danish)
