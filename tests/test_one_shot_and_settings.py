@@ -67,7 +67,10 @@ def test_separator_must_not_be_the_whole_target(ready):
     assert ready._split_target_and_text("saying") == ("saying", None)
 
 
-@pytest.mark.parametrize("lang", sorted(p.name for p in LOCALE.iterdir()))
+# Every language that has the send intent also has the one-shot files. A
+# language still being translated (ovos-localize sends one file at a time)
+# is not held to it until its send intent arrives.
+@pytest.mark.parametrize("lang", sorted(p.name for p in LOCALE.iterdir() if (p / "send_message.intent").is_file()))
 def test_every_language_has_one_shot_files(lang):
     assert (LOCALE / lang / "send_message_with_text.intent").read_text().strip()
     assert (LOCALE / lang / "message_separator.voc").read_text().strip()
