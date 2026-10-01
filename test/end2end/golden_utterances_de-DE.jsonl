@@ -1,0 +1,9 @@
+{"utterance": "sende eine nachricht an die Küche", "lang": "de-DE", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message"}
+{"utterance": "schicke eine nachricht an das Schlafzimmer", "lang": "de-DE", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message"}
+{"utterance": "sende eine intercom-nachricht an die Küche", "lang": "de-DE", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message"}
+{"utterance": "sende eine nachricht an das Schlafzimmer und sag das Essen ist fertig", "lang": "de-DE", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message_with_text"}
+{"utterance": "schicke eine nachricht an die Küche und sag das Essen ist fertig", "lang": "de-DE", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message_with_text"}
+{"utterance": "sende eine nachricht an das Schlafzimmer mit dem text das Essen ist fertig", "lang": "de-DE", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message_with_text"}
+{"utterance": "setze intercom-code auf vier sieben zwei neun", "lang": "de-DE", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "set_intercom_code"}
+{"utterance": "setze intercom-namen auf Küche", "lang": "de-DE", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "set_intercom_name"}
+{"utterance": "nenne dieses gerät Büro für intercom", "lang": "de-DE", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "set_intercom_name"}

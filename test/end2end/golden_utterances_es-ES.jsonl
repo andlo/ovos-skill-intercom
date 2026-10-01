@@ -1,0 +1,7 @@
+{"utterance": "envía un mensaje a la cocina", "lang": "es-ES", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message"}
+{"utterance": "envía un mensaje de intercomunicador a el dormitorio", "lang": "es-ES", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message"}
+{"utterance": "envía un mensaje a la cocina diciendo la cena está lista", "lang": "es-ES", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message_with_text"}
+{"utterance": "envía un mensaje a el dormitorio que diga la cena está lista", "lang": "es-ES", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message_with_text"}
+{"utterance": "establece el código de intercomunicador en cuatro siete dos nueve", "lang": "es-ES", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "set_intercom_code"}
+{"utterance": "establece el nombre de intercomunicador en cocina", "lang": "es-ES", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "set_intercom_name"}
+{"utterance": "llama a este dispositivo oficina para el intercomunicador", "lang": "es-ES", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "set_intercom_name"}
