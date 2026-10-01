@@ -1,0 +1,9 @@
+{"utterance": "send en besked til køkkenet", "lang": "da-DK", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message"}
+{"utterance": "send besked til soveværelset", "lang": "da-DK", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message"}
+{"utterance": "send en intercom-besked til stuen", "lang": "da-DK", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message"}
+{"utterance": "send en besked til køkkenet og sig maden er klar", "lang": "da-DK", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message_with_text"}
+{"utterance": "send besked til soveværelset og sig kom ned", "lang": "da-DK", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message_with_text"}
+{"utterance": "send en besked til stuen om at maden er klar", "lang": "da-DK", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "send_message_with_text"}
+{"utterance": "sæt intercom-kode til fire syv to ni", "lang": "da-DK", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "set_intercom_code"}
+{"utterance": "sæt intercom-navn til køkken", "lang": "da-DK", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "set_intercom_name"}
+{"utterance": "kald denne enhed kontor til intercom", "lang": "da-DK", "skill_id": "ovos-skill-intercom.andlo", "intent_label": "set_intercom_name"}
